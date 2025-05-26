@@ -3,22 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Game;
 
 class GamesController extends Controller
 {
-    protected $game_list;
-
-    public function __construct()
-    {
-        $this->game_list = require __DIR__ . '/../../../database/datasource.php';
-    }
-
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //Step 3. Your code here
+        $games = Game::all();
+        return view('games.index', ['games' => $games]);
     }
 
     /**
@@ -26,11 +21,13 @@ class GamesController extends Controller
      */
     public function show(string $id)
     {
-        //Step 4.
-        $results = array_filter($this->game_list, function ($game) use ($id) {
-            return $game['id'] != $id;
-        });
-        return view('games.show', ['games' => $results]);
+        $game = Game::find($id);
+        
+        if (!$game) {
+            abort(404, 'Game not found');
+        }
+        
+        return view('games.show', ['game' => $game]);
     }
 
     /**
@@ -38,12 +35,22 @@ class GamesController extends Controller
      */
     public function destroy(string $id)
     {
-        $results = array_filter($this->game_list, function ($game) use ($id) {
-            return $game['id'] == $id;
-        });
+        $game = Game::find($id);
+        
+        if (!$game) {
+            return response()->json([
+                'message' => 'Game not found.',
+                'content' => []
+            ], 404);
+        }
+        
+        $game->delete();
+        
+        $remainingGames = Game::all();
+        
         return response()->json([
-            'message' => 'Record Successfull Deleted.',
-            'content' => $results
+            'message' => 'Record Successfully Deleted.',
+            'content' => $remainingGames
         ], 200);
     }
 }
